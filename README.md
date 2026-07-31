@@ -54,52 +54,41 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from torch.utils.data import TensorDataset, DataLoader
 
-# Load dataset
-data = pd.read_csv('/content/drive/MyDrive/customers (1).csv')
+data = pd.read_csv('/content/customers.csv')
 data.head()
 
 data.columns
 
-# Drop ID column as it's not useful for classification
 data = data.drop(columns=["ID"])
 
-# Handle missing values
 data.fillna({"Work_Experience": 0, "Family_Size": data["Family_Size"].median()}, inplace=True)
 
-# Encode categorical variables
 categorical_columns = ["Gender", "Ever_Married", "Graduated", "Profession", "Spending_Score", "Var_1"]
 for col in categorical_columns:
     data[col] = LabelEncoder().fit_transform(data[col])
 
-# Encode target variable
 label_encoder = LabelEncoder()
 data["Segmentation"] = label_encoder.fit_transform(data["Segmentation"])  # A, B, C, D -> 0, 1, 2, 3
 
-# Split features and target
 X = data.drop(columns=["Segmentation"])
 y = data["Segmentation"].values
 
-# Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Normalize features
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Convert to tensors
 X_train = torch.FloatTensor(X_train)
 X_test = torch.FloatTensor(X_test)
 y_train = torch.LongTensor(y_train)
 y_test = torch.LongTensor(y_test)
 
-# Create DataLoader
 train_dataset = TensorDataset(X_train, y_train)
 test_dataset = TensorDataset(X_test, y_test)
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=16)
 
-# Define Neural Network(Model1)
 class PeopleClassifier(nn.Module):
     def __init__(self, input_size):
         super(PeopleClassifier, self).__init__()
@@ -116,7 +105,6 @@ class PeopleClassifier(nn.Module):
       x = self.fc4(x)
       return x
 
-# Training Loop
 def train_model(model, train_loader, criterion, optimizer, epochs):
   #Include your code here
   for epoch in range(epochs):
@@ -131,14 +119,12 @@ def train_model(model, train_loader, criterion, optimizer, epochs):
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
 
-# Initialize model
 model = PeopleClassifier(X_train.shape[1])
 criterion =  nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 train_model(model,train_loader,criterion,optimizer,epochs=100)
 
-# Evaluation
 model.eval()
 predictions, actuals = [], []
 with torch.no_grad():
@@ -148,7 +134,6 @@ with torch.no_grad():
         predictions.extend(predicted.numpy())
         actuals.extend(y_batch.numpy())
 
-# Compute metrics
 accuracy = accuracy_score(actuals, predictions)
 conf_matrix = confusion_matrix(actuals, predictions)
 class_report = classification_report(actuals, predictions, target_names=[str(i) for i in label_encoder.classes_])
@@ -191,7 +176,8 @@ print(f'Actual class for sample input: {label_encoder.inverse_transform([y_test[
 
 
 ### New Sample Data Prediction
-<img width="628" height="197" alt="image" src="https://github.com/user-attachments/assets/d518e2ec-823c-472e-889f-d505708db101" />
+<img width="408" height="107" alt="image" src="https://github.com/user-attachments/assets/f1c68a23-a39f-4404-aa46-f60893dea3ed" />
+
 
 
 ## RESULT
